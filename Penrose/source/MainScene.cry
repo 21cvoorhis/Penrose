@@ -1,0 +1,149 @@
+import Graphics2D;
+import Math;
+import Random;
+import TwoCansAlpha4;
+
+///arms[arm #][point in arm #]["x" or "y" cord]
+
+class Triangle{
+	
+	field cx;
+	field cy;
+	field l;
+	field angle;
+	field arms;
+	field colors;
+	
+	constructor(cx, cy, l, angle){
+		this.cx = cx;
+		this.cy = cy;
+		this.l = l;
+		this.angle = angle;
+		this.arms = [[],[],[]];
+		this.colors = [255, 255, 255, false];
+	}
+	
+	function updateArms(){
+		
+		s = (this.l/(3**0.5));
+		newAngle = this.angle;
+		x = [];
+		y = [];
+		
+		for(i = 0; i<3; i++){
+			this.arms[i] = [];
+			x = [];
+			y = [];
+			
+		
+			//starting point of the arm
+			x.add(s*cos(newAngle));
+			y.add(s*sin(newAngle));
+			
+			//starting point counterclockwise of this one
+			x.add(s*cos(newAngle + ((2*Math.PI)/3)));
+			y.add(s*sin(newAngle + ((2*Math.PI)/3)));
+			
+			//extend line between them
+			x.add(x[1]+(0.5*this.l*cos(newAngle + ((5*Math.PI)/6))));
+			y.add(y[1]+(0.5*this.l*sin(newAngle + ((5*Math.PI)/6))));
+			
+			x.add(x[2]+ (2.5*this.l*cos(newAngle + ((3*Math.PI)/2))));
+			y.add(y[2]+ (2.5*this.l*sin(newAngle + ((3*Math.PI)/2))));
+			
+			x.add(x[3]+ (3*this.l*cos(newAngle + ((1*Math.PI)/6))));
+			y.add(y[3]+ (3*this.l*sin(newAngle + ((1*Math.PI)/6))));
+			
+			x.add(x[4]+ (0.5*this.l*cos(newAngle + ((1*Math.PI)/2))));
+			y.add(y[4]+ (0.5*this.l*sin(newAngle + ((1*Math.PI)/2))));
+			
+			
+			for(j = 0; j<x.length; j++){
+				this.arms[i].add({"x": this.cx + x[j], "y": this.cy-y[j]});
+			}
+			
+			newAngle = this.angle + (((2*Math.PI)/3)*(i+1));
+		}
+		
+		
+	}
+	
+	function output(){
+		
+		this.rave();
+		
+		for(i = 0; i<this.arms.length; i++){
+			for(j = 0; j<this.arms[i].length; j++){
+				if(j<this.arms[i].length-1){
+					Graphics2D.Draw.line(this.arms[i][j]["x"], this.arms[i][j]["y"], this.arms[i][j+1]["x"], this.arms[i][j+1]["y"], 3, this.colors[0], this.colors[1], this.colors[2]);
+				}else{
+					//Graphics2D.Draw.line(this.triangle.arms[i][j]["x"], this.triangle.arms[i][j]["y"], this.triangle.arms[i][0]["x"], this.triangle.arms[i][0]["y"], 3, 255, 255, 255);
+				}
+			}
+		}
+	}
+	
+	function rave(){
+		if(this.colors[3]){
+			if(this.colors[0] == this.colors[1]){
+				this.colors[0] = 255;
+				this.colors[1] = 191;
+				this.colors[2] = 127;
+			}else{
+				//this oscillates colors, odds go down and evens go up (trash but it works)
+				for(i = 0; i<3; i++){
+					
+					if(this.colors[i]%2 == 1 && this.colors[i]>1){
+						this.colors[i] = this.colors[i] - 2;
+					}else if(this.colors[i] == 1){
+						this.colors[i] = 2;
+					}else if(this.colors[i]%2 == 0 && this.colors[i]<254){
+						this.colors[i] = this.colors[i] + 2;
+					}else{
+						this.colors[i] = 255;
+					}
+				}
+			}	
+		}else{
+			this.colors[0] = 255;
+			this.colors[1] = 255;
+			this.colors[2] = 255;
+		}
+	}
+}
+
+class MainScene : AbstractScene {
+	
+	field triangle;
+	
+	constructor() : base() {
+		this.triangle = new Triangle (300,300, 50.0, 0);
+	}
+	
+	function update(inputManager, events) {
+		
+		if (inputManager.isKeyPressed(KeyboardKey.UP)) {
+			this.triangle.l++;
+		}else if (inputManager.isKeyPressed(KeyboardKey.DOWN)) {
+			this.triangle.l--;
+		}
+		
+		if (inputManager.isKeyPressed(KeyboardKey.LEFT)) {
+			this.triangle.angle = this.triangle.angle + (Math.PI/180);
+		}else if (inputManager.isKeyPressed(KeyboardKey.RIGHT)) {
+			this.triangle.angle = this.triangle.angle - (Math.PI/180);
+		}
+		
+		if (inputManager.isKeyPressedThisFrame(KeyboardKey.R)){
+			this.triangle.colors[3] = !this.triangle.colors[3];
+		}
+		
+		this.triangle.updateArms();
+		
+	}
+	
+	function render() {
+		Graphics2D.Draw.fill(0, 0, 0);
+		this.triangle.output();
+	}
+}
